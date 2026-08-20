@@ -6,6 +6,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import PublicOnlyRoute from '@/components/PublicOnlyRoute';
 
 import AppLayout from '@/components/layout/AppLayout';
 import Home from '@/pages/Home';
@@ -44,20 +46,34 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route element={<AppLayout />}>
+        {/* Public — browsable without an account */}
         <Route path="/" element={<Home />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/course/:id" element={<CourseDetail />} />
-        <Route path="/community" element={<Community />} />
         <Route path="/about" element={<About />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/dashboard" element={<Navigate to="/community" replace />} />
-        <Route path="/assessment/:id" element={<AssessmentPlayer />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Auth pages — only for logged-out visitors */}
+        <Route element={<PublicOnlyRoute />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
+
+        {/* Requires login */}
+        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+          <Route path="/community" element={<Community />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/dashboard" element={<Navigate to="/community" replace />} />
+          <Route path="/assessment/:id" element={<AssessmentPlayer />} />
+        </Route>
       </Route>
-      <Route path="/learn/:id" element={<LearningLab />} />
+
+      {/* LearningLab is full-screen (outside AppLayout) but still requires login */}
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/learn/:id" element={<LearningLab />} />
+      </Route>
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
