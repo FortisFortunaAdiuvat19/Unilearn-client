@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import apiClient from "@/api/apiClient";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Check, X, FileQuestion, GraduationCap,
-  Award, AlertCircle
+  Award, AlertCircle, Loader2
 } from "lucide-react";
 
 export default function AssessmentPlayer() {
@@ -25,6 +25,23 @@ export default function AssessmentPlayer() {
   const [theoryAnswers, setTheoryAnswers] = useState({});
   const [objectiveAnswers, setObjectiveAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
+
+  const submitMutation = useMutation({
+    mutationFn: async () => {
+      const objective_answers = (assessment?.objective_questions || []).map((_, i) =>
+        typeof objectiveAnswers[i] === "number" ? objectiveAnswers[i] : null
+      );
+      const theory_answers = (assessment?.theory_questions || []).map((_, i) =>
+        theoryAnswers[i] || ""
+      );
+      const res = await apiClient.post(`/assessments/${id}/submit`, {
+        objective_answers,
+        theory_answers,
+      });
+      return res.data;
+    },
+    onSuccess: () => setSubmitted(true),
+  });
 
   if (isLoading) {
     return (
@@ -179,12 +196,26 @@ export default function AssessmentPlayer() {
                 </button>
               )}
               <button
-                onClick={() => setSubmitted(true)}
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors ml-auto"
+                onClick={() => submitMutation.mutate()}
+                disabled={submitMutation.isPending}
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors ml-auto disabled:opacity-60"
               >
-                Submit {isExam ? "Exam" : "Test"} <Check className="w-4 h-4" />
+                {submitMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit {isExam ? "Exam" : "Test"} <Check className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
+            {submitMutation.isError && (
+              <p className="text-sm text-destructive text-right">
+                {submitMutation.error?.response?.data?.message || "Failed to submit. Please try again."}
+              </p>
+            )}
           </motion.div>
         )}
 
@@ -295,6 +326,7 @@ export default function AssessmentPlayer() {
                   setStep(0);
                   setTheoryAnswers({});
                   setObjectiveAnswers({});
+                  submitMutation.reset();
                 }}
                 className="inline-flex items-center gap-2 border border-border/60 px-5 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
               >
