@@ -16,7 +16,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -137,6 +137,7 @@ export default function Navbar() {
                 {[
                   ...navLinks,
                   ...(isAuthenticated ? [{ label: "Profile", path: "/profile" }] : []),
+                  ...(user?.role === "admin" ? [{ label: "New Course", path: "/admin/create-course" }] : []),
                 ].map((link, i) => (
                   <motion.div
                     key={link.path}
