@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PublicOnlyRoute from '@/components/PublicOnlyRoute';
+import AdminRoute from '@/components/AdminRoute';
 
 import AppLayout from '@/components/layout/AppLayout';
 import Home from '@/pages/Home';
@@ -18,6 +19,7 @@ import Community from '@/pages/Community';
 import About from '@/pages/About';
 import Profile from '@/pages/Profile';
 import AssessmentPlayer from '@/pages/AssessmentPlayer';
+import CreateCourse from '@/pages/CreateCourse';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -66,6 +68,11 @@ const AuthenticatedApp = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/dashboard" element={<Navigate to="/community" replace />} />
           <Route path="/assessment/:id" element={<AssessmentPlayer />} />
+        </Route>
+
+        {/* Requires login + admin role */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin/create-course" element={<CreateCourse />} />
         </Route>
       </Route>
 
