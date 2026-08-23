@@ -20,6 +20,7 @@ import About from '@/pages/About';
 import Profile from '@/pages/Profile';
 import AssessmentPlayer from '@/pages/AssessmentPlayer';
 import CreateCourse from '@/pages/CreateCourse';
+import EditCourse from '@/pages/EditCourse';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -73,6 +74,7 @@ const AuthenticatedApp = () => {
         {/* Requires login + admin role */}
         <Route element={<AdminRoute />}>
           <Route path="/admin/create-course" element={<CreateCourse />} />
+          <Route path="/admin/edit-course/:id" element={<EditCourse />} />
         </Route>
       </Route>
 
