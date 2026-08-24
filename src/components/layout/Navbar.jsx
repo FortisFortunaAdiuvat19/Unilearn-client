@@ -137,6 +137,7 @@ export default function Navbar() {
                 {[
                   ...navLinks,
                   ...(isAuthenticated ? [{ label: "Profile", path: "/profile" }] : []),
+                  ...(isAuthenticated ? [{ label: "Become a Tutor", path: "/become-tutor" }] : []),
                   ...(user?.role === "admin" ? [{ label: "New Course", path: "/admin/create-course" }] : []),
                 ].map((link, i) => (
                   <motion.div
