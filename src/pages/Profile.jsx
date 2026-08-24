@@ -4,6 +4,7 @@ import apiClient from "@/api/apiClient";
 import ProgressTracker from "@/components/profile/ProgressTracker";
 import CourseRecommendation from "@/components/profile/CourseRecommendation";
 import CompletionSummary from "@/components/profile/CompletionSummary";
+import PerformanceInsights from "@/components/profile/PerformanceInsights";
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Profile() {
@@ -39,6 +40,7 @@ export default function Profile() {
         </div>
 
         <CompletionSummary courses={courses} enrollments={enrollments} />
+        <PerformanceInsights />
         <CourseRecommendation courses={courses} enrollments={enrollments} />
         <ProgressTracker courses={courses} enrollments={enrollments} />
       </div>
