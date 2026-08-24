@@ -6,6 +6,7 @@ import { Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 export default function ContentGenerator({ course }) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState(null);
+  const [summary, setSummary] = useState("");
   const [error, setError] = useState(null);
 
   const courseId = course._id || course.id;
@@ -15,15 +16,21 @@ export default function ContentGenerator({ course }) {
     setError(null);
 
     try {
-      // The backend now handles the Gemini LLM Prompt and DB creation
-      await apiClient.post(`/courses/${courseId}/generate-content`);
+      const res = await apiClient.post(`/courses/${courseId}/generate-content`);
+      const { documents_created = 0, videos_created = 0, assessment_created = false } = res.data || {};
 
       queryClient.invalidateQueries({ queryKey: ["course-documents", courseId] });
       queryClient.invalidateQueries({ queryKey: ["course-videos", courseId] });
       queryClient.invalidateQueries({ queryKey: ["course-assessments", courseId] });
 
+      const parts = [];
+      if (documents_created) parts.push(`${documents_created} note${documents_created === 1 ? "" : "s"}`);
+      if (videos_created) parts.push(`${videos_created} video topic${videos_created === 1 ? "" : "s"}`);
+      if (assessment_created) parts.push("1 practice test");
+      setSummary(parts.length ? `Added ${parts.join(", ")}` : "Done, but nothing came back to add");
+
       setStatus("done");
-      setTimeout(() => setStatus(null), 4000);
+      setTimeout(() => setStatus(null), 5000);
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Failed to generate content");
       setStatus(null);
@@ -34,23 +41,18 @@ export default function ContentGenerator({ course }) {
     <div>
       <button
         onClick={handleGenerate}
-        disabled={status === "generating" || status === "saving"}
+        disabled={status === "generating"}
         className="inline-flex items-center gap-2 border border-primary/40 text-primary px-4 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:bg-primary/5 transition-colors disabled:opacity-60"
       >
         {status === "generating" ? (
           <>
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Searching web & generating...
-          </>
-        ) : status === "saving" ? (
-          <>
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Saving content...
+            Generating with Gemini...
           </>
         ) : status === "done" ? (
           <>
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Content generated!
+            {summary || "Content generated!"}
           </>
         ) : (
           <>

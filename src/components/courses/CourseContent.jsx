@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import ContentGenerator from "./ContentGenerator";
+import { useAuth } from "@/lib/AuthContext";
 
 const sourceLabels = {
   google_drive: "Google Drive",
@@ -38,6 +39,7 @@ const tabs = [
 ];
 
 export default function CourseContent({ courseId, course }) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("documents");
   const [expandedDoc, setExpandedDoc] = useState(null);
 
@@ -81,7 +83,7 @@ export default function CourseContent({ courseId, course }) {
             </span>
           )}
         </h2>
-        <ContentGenerator course={course} />
+        {user?.role === "admin" && <ContentGenerator course={course} />}
       </div>
 
       {/* Tab navigation */}

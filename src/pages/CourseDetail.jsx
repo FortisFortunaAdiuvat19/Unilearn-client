@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/api/apiClient";
 import { motion } from "framer-motion";
-import { Clock, Users, Star, ArrowRight } from "lucide-react";
+import { Clock, Users, Star, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import CourseContent from "@/components/courses/CourseContent";
+import TutorList from "@/components/courses/TutorList";
 import { useAuth } from '@/lib/AuthContext';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const FUTO_LOGO = "https://upload.wikimedia.org/wikipedia/en/1/16/FUTO_logo.png";
 
@@ -40,6 +46,7 @@ const categoryLabels = {
 
 export default function CourseDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -50,6 +57,13 @@ export default function CourseDetail() {
       const res = await apiClient.get(`/courses/${id}`);
       return res.data;
     },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await apiClient.delete(`/courses/${id}`);
+    },
+    onSuccess: () => navigate("/courses"),
   });
 
   const enrollMutation = useMutation({
@@ -124,6 +138,38 @@ export default function CourseDetail() {
           <span>/</span>
           <span className="text-foreground">{course.title}</span>
         </div>
+
+        {user?.role === "admin" && (
+          <div className="flex items-center gap-2 mb-6 -mt-4">
+            <Link
+              to={`/admin/edit-course/${course._id}`}
+              className="inline-flex items-center gap-1.5 border border-border/60 px-3 py-1.5 rounded-sm text-xs font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit
+            </Link>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="inline-flex items-center gap-1.5 border border-destructive/40 text-destructive px-3 py-1.5 rounded-sm text-xs font-semibold uppercase tracking-wider hover:bg-destructive/5 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete "{course.title}"?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This also removes its documents, videos, assessments, and student enrollments. This can't be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => deleteMutation.mutate()}>
+                    Delete course
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
 
         {/* Split layout */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16">
@@ -226,6 +272,9 @@ export default function CourseDetail() {
 
             {/* Course Content - Documents, Videos, Assessments */}
             <CourseContent courseId={course._id} course={course} />
+
+            {/* Tutors for this course */}
+            <TutorList courseId={course._id} />
 
             {/* Tags */}
             {course.tags?.length > 0 && (
