@@ -46,9 +46,10 @@ export default function AssessmentPlayer() {
     onSuccess: () => setSubmitted(true),
   });
 
-  // Videos for this course, fetched only once results are showing and only
-  // used if the score is low enough to suggest one. Shares a query key with
-  // CourseContent.jsx, so it's usually already cached.
+  // Videos and top tutor for this course, fetched only once results are
+  // showing and only used if the score is low enough to suggest them.
+  // Videos share a query key with CourseContent.jsx, so it's usually
+  // already cached.
   const { data: courseVideos = [] } = useQuery({
     queryKey: ["course-videos", assessment?.course_id],
     queryFn: async () => {
@@ -57,6 +58,16 @@ export default function AssessmentPlayer() {
     },
     enabled: !!assessment?.course_id && submitted,
   });
+
+  const { data: courseTutors } = useQuery({
+    queryKey: ["course-tutors", assessment?.course_id],
+    queryFn: async () => {
+      const res = await apiClient.get(`/tutors/course/${assessment.course_id}`);
+      return res.data;
+    },
+    enabled: !!assessment?.course_id && submitted,
+  });
+  const topTutor = courseTutors?.tutors?.[0];
 
   if (isLoading) {
     return (
@@ -337,6 +348,14 @@ export default function AssessmentPlayer() {
                     >
                       Watch: {courseVideos[0].title}
                     </a>
+                  )}
+                  {topTutor && (
+                    <Link
+                      to={`/course/${assessment.course_id}`}
+                      className="inline-flex items-center gap-1.5 border border-border/60 px-3 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
+                    >
+                      Connect with {topTutor.name} ({topTutor.overall_rating}★)
+                    </Link>
                   )}
                   <Link
                     to="/community"
