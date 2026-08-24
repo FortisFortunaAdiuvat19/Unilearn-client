@@ -5,8 +5,12 @@ import apiClient from "@/api/apiClient";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Check, X, FileQuestion, GraduationCap,
-  Award, AlertCircle, Loader2
+  Award, AlertCircle, Loader2, Lightbulb
 } from "lucide-react";
+
+// Should match IMPROVEMENT_THRESHOLD in unilearn-server/routes/recommendations.js —
+// there's no shared code between the two repos, so this is duplicated on purpose.
+const IMPROVEMENT_THRESHOLD = 70;
 
 export default function AssessmentPlayer() {
   const { id } = useParams();
@@ -20,7 +24,6 @@ export default function AssessmentPlayer() {
   });
 
   const isExam = assessment?.type === "exam";
-  const totalSteps = isExam ? 2 : 1;
   const [step, setStep] = useState(0);
   const [theoryAnswers, setTheoryAnswers] = useState({});
   const [objectiveAnswers, setObjectiveAnswers] = useState({});
@@ -41,6 +44,18 @@ export default function AssessmentPlayer() {
       return res.data;
     },
     onSuccess: () => setSubmitted(true),
+  });
+
+  // Videos for this course, fetched only once results are showing and only
+  // used if the score is low enough to suggest one. Shares a query key with
+  // CourseContent.jsx, so it's usually already cached.
+  const { data: courseVideos = [] } = useQuery({
+    queryKey: ["course-videos", assessment?.course_id],
+    queryFn: async () => {
+      const res = await apiClient.get(`/courses/${assessment.course_id}/videos`);
+      return res.data;
+    },
+    enabled: !!assessment?.course_id && submitted,
   });
 
   if (isLoading) {
@@ -66,6 +81,20 @@ export default function AssessmentPlayer() {
 
   const objectiveQuestions = assessment.objective_questions || [];
   const theoryQuestions = assessment.theory_questions || [];
+  const hasObjective = objectiveQuestions.length > 0;
+  const hasTheory = theoryQuestions.length > 0;
+
+  // Which sections actually exist, in a fixed order. This is driven by what
+  // content the assessment actually has, not by its "test" vs "exam" type
+  // label — that label is just a badge, and a "test" can still contain
+  // objective questions (previously those were silently never shown).
+  const sections = [
+    ...(hasObjective ? ["objective"] : []),
+    ...(hasTheory ? ["theory"] : []),
+  ];
+  const totalSteps = sections.length;
+  const currentSection = sections[step];
+  const isLastSection = step === sections.length - 1;
 
   const objectiveScore = objectiveQuestions.reduce((acc, q, i) => {
     return acc + (objectiveAnswers[i] === q.correct_option ? 1 : 0);
@@ -73,8 +102,18 @@ export default function AssessmentPlayer() {
   const objectiveMax = objectiveQuestions.length;
   const objectivePct = objectiveMax > 0 ? Math.round((objectiveScore / objectiveMax) * 100) : 0;
 
-  const stepNames = isExam ? ["Objective Section", "Theory Section"] : ["Theory Questions"];
+  const stepNames = sections.map((s) => (s === "objective" ? "Objective Section" : "Theory Section"));
   const currentStepName = submitted ? "Results" : stepNames[step];
+
+  const handleRetake = () => {
+    setSubmitted(false);
+    setStep(0);
+    setTheoryAnswers({});
+    setObjectiveAnswers({});
+    submitMutation.reset();
+  };
+
+  const needsImprovement = hasObjective && objectivePct < IMPROVEMENT_THRESHOLD;
 
   return (
     <div className="pt-28 pb-20">
@@ -117,14 +156,22 @@ export default function AssessmentPlayer() {
         )}
 
         {/* Current step label */}
-        {!submitted && (
+        {!submitted && totalSteps > 0 && (
           <div className="mb-6">
             <h2 className="font-display text-xl font-bold">{currentStepName}</h2>
           </div>
         )}
 
+        {/* No questions at all — shouldn't normally happen, but don't show a blank page */}
+        {!submitted && totalSteps === 0 && (
+          <div className="border border-border/40 rounded-sm p-8 text-center">
+            <AlertCircle className="w-6 h-6 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">This assessment doesn't have any questions yet.</p>
+          </div>
+        )}
+
         {/* OBJECTIVE SECTION */}
-        {!submitted && isExam && step === 0 && (
+        {!submitted && currentSection === "objective" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             {objectiveQuestions.map((q, i) => (
               <div key={i} className="border border-border/40 rounded-sm p-5">
@@ -151,18 +198,41 @@ export default function AssessmentPlayer() {
               </div>
             ))}
             <div className="flex justify-end">
-              <button
-                onClick={() => setStep(1)}
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors"
-              >
-                Next: Theory Section <ArrowRight className="w-4 h-4" />
-              </button>
+              {isLastSection ? (
+                <button
+                  onClick={() => submitMutation.mutate()}
+                  disabled={submitMutation.isPending}
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-60"
+                >
+                  {submitMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit {isExam ? "Exam" : "Test"} <Check className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStep(step + 1)}
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors"
+                >
+                  Next: Theory Section <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
+            {isLastSection && submitMutation.isError && (
+              <p className="text-sm text-destructive text-right">
+                {submitMutation.error?.response?.data?.message || "Failed to submit. Please try again."}
+              </p>
+            )}
           </motion.div>
         )}
 
         {/* THEORY SECTION */}
-        {!submitted && (isExam ? step === 1 : step === 0) && (
+        {!submitted && currentSection === "theory" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             {theoryQuestions.map((q, i) => (
               <div key={i} className="border border-border/40 rounded-sm p-5">
@@ -187,9 +257,9 @@ export default function AssessmentPlayer() {
               </div>
             ))}
             <div className="flex justify-between items-center">
-              {isExam && (
+              {step > 0 && (
                 <button
-                  onClick={() => setStep(0)}
+                  onClick={() => setStep(step - 1)}
                   className="inline-flex items-center gap-2 border border-border/60 px-5 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
@@ -228,7 +298,7 @@ export default function AssessmentPlayer() {
                 <Award className="w-6 h-6 text-primary" />
                 <h2 className="font-display text-2xl font-bold">Results</h2>
               </div>
-              {isExam && objectiveMax > 0 && (
+              {hasObjective ? (
                 <>
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <span className="font-display text-4xl font-bold text-primary">{objectiveScore}</span>
@@ -238,16 +308,48 @@ export default function AssessmentPlayer() {
                     Objective score: {objectivePct}% correct
                   </p>
                 </>
-              )}
-              {!isExam && (
+              ) : (
                 <p className="text-sm text-muted-foreground">
-                  Theory test submitted. Review your answers below.
+                  Submitted. Review your answers below.
                 </p>
               )}
             </div>
 
+            {/* Ways to improve — only when there's an objective score below the threshold */}
+            {needsImprovement && (
+              <div className="border border-primary/30 bg-primary/5 rounded-sm p-5 mb-8">
+                <h3 className="font-display text-sm font-bold mb-3 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-primary" /> Ways to improve
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleRetake}
+                    className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors"
+                  >
+                    Retake this {isExam ? "exam" : "test"}
+                  </button>
+                  {courseVideos[0] && (
+                    <a
+                      href={courseVideos[0].url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 border border-border/60 px-3 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
+                    >
+                      Watch: {courseVideos[0].title}
+                    </a>
+                  )}
+                  <Link
+                    to="/community"
+                    className="inline-flex items-center gap-1.5 border border-border/60 px-3 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
+                  >
+                    Find classmates to study with
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Objective results */}
-            {isExam && objectiveQuestions.map((q, i) => {
+            {hasObjective && objectiveQuestions.map((q, i) => {
               const isCorrect = objectiveAnswers[i] === q.correct_option;
               const selected = objectiveAnswers[i];
               return (
@@ -283,7 +385,7 @@ export default function AssessmentPlayer() {
             })}
 
             {/* Theory results */}
-            {theoryQuestions.length > 0 && (
+            {hasTheory && (
               <div className="mt-8">
                 <h3 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-primary" />
@@ -321,13 +423,7 @@ export default function AssessmentPlayer() {
             {/* Actions */}
             <div className="flex gap-3 justify-center mt-8">
               <button
-                onClick={() => {
-                  setSubmitted(false);
-                  setStep(0);
-                  setTheoryAnswers({});
-                  setObjectiveAnswers({});
-                  submitMutation.reset();
-                }}
+                onClick={handleRetake}
                 className="inline-flex items-center gap-2 border border-border/60 px-5 py-3 rounded-sm text-sm font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
               >
                 Retake
