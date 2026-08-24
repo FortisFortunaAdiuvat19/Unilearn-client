@@ -2,12 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/api/apiClient";
-import { TrendingUp, RotateCcw, Youtube, Users, PartyPopper } from "lucide-react";
+import { TrendingUp, RotateCcw, Youtube, Users, UserCheck, PartyPopper } from "lucide-react";
 
 const actionIcons = {
   retake_test: RotateCcw,
   watch_video: Youtube,
   join_study_group: Users,
+  connect_tutor: UserCheck,
 };
 
 export default function PerformanceInsights() {
