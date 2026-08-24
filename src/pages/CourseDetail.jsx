@@ -5,6 +5,7 @@ import apiClient from "@/api/apiClient";
 import { motion } from "framer-motion";
 import { Clock, Users, Star, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import CourseContent from "@/components/courses/CourseContent";
+import TutorList from "@/components/courses/TutorList";
 import { useAuth } from '@/lib/AuthContext';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -271,6 +272,9 @@ export default function CourseDetail() {
 
             {/* Course Content - Documents, Videos, Assessments */}
             <CourseContent courseId={course._id} course={course} />
+
+            {/* Tutors for this course */}
+            <TutorList courseId={course._id} />
 
             {/* Tags */}
             {course.tags?.length > 0 && (
