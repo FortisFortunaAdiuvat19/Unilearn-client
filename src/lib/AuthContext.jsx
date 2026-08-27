@@ -69,16 +69,27 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     // Manually trigger a check if needed, though onAuthStateChanged handles most cases
-    if (!authChecked) {
-      setIsLoadingAuth(true);
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        setUser(currentUser);
+    if (authChecked) return;
+    setIsLoadingAuth(true);
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      try {
+        const response = await apiClient.post('/auth/sync');
+        setUser({ ...currentUser, ...response.data.user });
         setIsAuthenticated(true);
+        setAuthError(null);
+      } catch (error) {
+        console.error('Failed to sync user with backend:', error);
+        setAuthError({ type: 'sync_failed', message: 'Failed to verify user profile.' });
+        setIsAuthenticated(false);
+        setUser(null);
       }
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
     }
+    setIsLoadingAuth(false);
+    setAuthChecked(true);
   };
 
   return (
