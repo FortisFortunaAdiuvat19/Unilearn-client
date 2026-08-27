@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import GoogleIcon from "@/components/GoogleIcon";
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/community";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,7 +31,7 @@ export default function Register() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // Optional: Update display name if you add a name field to the form
       // await updateProfile(userCredential.user, { displayName: "Student" });
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -40,7 +42,7 @@ export default function Register() {
   const handleGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || "Google sign in failed");
     }
