@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import AuthSyncError from '@/components/AuthSyncError';
 
 const DefaultFallback = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -27,11 +28,12 @@ export default function ProtectedRoute({ fallback = <DefaultFallback /> }) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     }
-    // Any other auth error (e.g. the profile sync failing) is treated the
-    // same as not being logged in — send back to login, remembering where
-    // they were headed so a successful login returns them here instead of
-    // dumping them on the homepage.
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Any other auth error (the profile sync failing, most likely) is not
+    // actually a "you're not logged in" situation — Firebase already
+    // confirmed the credentials. Redirecting to /login here would just
+    // loop forever, since re-entering an already-correct password can't
+    // fix a broken connection to the backend.
+    return <AuthSyncError message={authError.message} />;
   }
 
   if (!isAuthenticated) {
