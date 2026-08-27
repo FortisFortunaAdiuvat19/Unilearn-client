@@ -65,7 +65,7 @@ const AuthenticatedApp = () => {
         </Route>
 
         {/* Requires login */}
-        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route element={<ProtectedRoute />}>
           <Route path="/community" element={<Community />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/dashboard" element={<Navigate to="/community" replace />} />
@@ -81,7 +81,7 @@ const AuthenticatedApp = () => {
       </Route>
 
       {/* LearningLab is full-screen (outside AppLayout) but still requires login */}
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+      <Route element={<ProtectedRoute />}>
         <Route path="/learn/:id" element={<LearningLab />} />
       </Route>
 
