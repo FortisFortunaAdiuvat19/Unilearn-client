@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ import GoogleIcon from "@/components/GoogleIcon";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Set by ProtectedRoute/AdminRoute when they bounce someone here — send
+  // them back to what they were actually trying to open, not the homepage.
+  const from = location.state?.from?.pathname || "/community";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +26,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || "Invalid email or password");
     } finally {
@@ -33,7 +37,7 @@ export default function Login() {
   const handleGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || "Google sign in failed");
     }
