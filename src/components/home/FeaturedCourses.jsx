@@ -2,22 +2,12 @@ import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock, Users } from "lucide-react";
+import {
+  CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS,
+  DEFAULT_CATEGORY_ICON, DEFAULT_CATEGORY_COLOR,
+} from "@/lib/courseCategories";
 
-const categoryLabels = {
-  CSC: "Computer Science",
-  CIT: "Computer Info Tech",
-  MTH: "Mathematics",
-  PHY: "Physics",
-  CHM: "Chemistry",
-  BIO: "Biology",
-  ENG: "Engineering",
-  GST: "General Studies",
-  STA: "Statistics",
-  IFT: "Info Technology",
-  SIW: "Industrial Training",
-};
-
-export default function FeaturedCourses({ courses, categoryImages }) {
+export default function FeaturedCourses({ courses }) {
   const scrollRef = useRef(null);
 
   const scroll = (dir) => {
@@ -60,7 +50,10 @@ export default function FeaturedCourses({ courses, categoryImages }) {
           ref={scrollRef}
           className="flex gap-5 overflow-x-auto hide-scrollbar pb-4 -mx-6 px-6 md:-mx-10 md:px-10"
         >
-          {courses.map((course, i) => (
+          {courses.map((course, i) => {
+            const CategoryIcon = CATEGORY_ICONS[course.category] || DEFAULT_CATEGORY_ICON;
+            const colorClass = CATEGORY_COLORS[course.category] || DEFAULT_CATEGORY_COLOR;
+            return (
             <motion.div
               key={course._id}
               initial={{ opacity: 0, y: 20 }}
@@ -72,11 +65,17 @@ export default function FeaturedCourses({ courses, categoryImages }) {
               <Link to={`/course/${course._id}`} className="block">
                 {/* Vertical slice card */}
                 <div className="relative overflow-hidden rounded-sm aspect-[3/4] mb-4">
-                  <img
-                    src={course.image_url || categoryImages[course.category] || categoryImages.default}
-                    alt={course.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  {course.image_url ? (
+                    <img
+                      src={course.image_url}
+                      alt={course.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center ${colorClass}`}>
+                      <CategoryIcon className="w-20 h-20 opacity-50" strokeWidth={1.5} />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
                   
                   {/* Difficulty badge */}
@@ -95,7 +94,7 @@ export default function FeaturedCourses({ courses, categoryImages }) {
                         </span>
                       )}
                       <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">
-                        {categoryLabels[course.category] || course.category}
+                        {CATEGORY_LABELS[course.category] || course.category}
                       </span>
                     </div>
                     <h3 className="font-display text-lg font-semibold text-white leading-snug">
@@ -119,7 +118,8 @@ export default function FeaturedCourses({ courses, categoryImages }) {
                 </div>
               </Link>
             </motion.div>
-          ))}
+            );
+          })}
 
           {/* View all card */}
           <div className="flex-shrink-0 w-[280px] md:w-[300px]">
