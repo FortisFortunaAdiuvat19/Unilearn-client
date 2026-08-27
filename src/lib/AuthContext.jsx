@@ -4,6 +4,20 @@ import apiClient from '@/api/apiClient';
 
 const AuthContext = createContext();
 
+// Turns an axios error into a message that actually says what went wrong,
+// instead of a generic "couldn't verify your profile." Distinguishing
+// these matters: a CORS/network failure needs a completely different fix
+// (server config) than a 401 (bad/expired token) or a 500 (server bug).
+const describeSyncError = (error) => {
+  if (error.response) {
+    return `Server responded with ${error.response.status}: ${error.response.data?.message || error.message}`;
+  }
+  if (error.request) {
+    return `No response from the server (${error.message}). This usually means a CORS or network configuration issue on the backend.`;
+  }
+  return error.message || 'Unknown error';
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,7 +45,7 @@ export const AuthProvider = ({ children }) => {
           setAuthError(null);
         } catch (error) {
           console.error('Failed to sync user with backend:', error);
-          setAuthError({ type: 'sync_failed', message: 'Failed to verify user profile.' });
+          setAuthError({ type: 'sync_failed', message: `We couldn't verify your session: ${describeSyncError(error)}` });
           setIsAuthenticated(false);
           setUser(null);
         }
@@ -80,7 +94,7 @@ export const AuthProvider = ({ children }) => {
         setAuthError(null);
       } catch (error) {
         console.error('Failed to sync user with backend:', error);
-        setAuthError({ type: 'sync_failed', message: 'Failed to verify user profile.' });
+        setAuthError({ type: 'sync_failed', message: `We couldn't verify your session: ${describeSyncError(error)}` });
         setIsAuthenticated(false);
         setUser(null);
       }
