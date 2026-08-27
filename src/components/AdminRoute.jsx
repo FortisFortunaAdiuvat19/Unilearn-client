@@ -1,5 +1,6 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import AuthSyncError from '@/components/AuthSyncError';
 
 // Requires both a logged-in user and an admin role.
 // Not logged in -> /login (remembering where they were headed).
@@ -10,11 +11,15 @@ import { useAuth } from '@/lib/AuthContext';
 export default function AdminRoute({
   forbiddenElement = <Navigate to="/" replace />,
 }) {
-  const { user, isAuthenticated, isLoadingAuth, authChecked } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth, authChecked, authError } = useAuth();
   const location = useLocation();
 
   if (isLoadingAuth || !authChecked) {
     return null;
+  }
+
+  if (authError && authError.type !== 'user_not_registered') {
+    return <AuthSyncError message={authError.message} />;
   }
 
   if (!isAuthenticated) {
