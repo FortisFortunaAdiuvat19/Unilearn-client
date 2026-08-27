@@ -4,19 +4,7 @@ import apiClient from "@/api/apiClient";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { motion } from "framer-motion";
 import CourseCard from "@/components/courses/CourseCard";
-
-const categories = [
-  { value: "all", label: "All Subjects" },
-  { value: "CSC", label: "CSC" },
-  { value: "CIT", label: "CIT" },
-  { value: "MTH", label: "Mathematics" },
-  { value: "PHY", label: "Physics" },
-  { value: "CHM", label: "Chemistry" },
-  { value: "BIO", label: "Biology" },
-  { value: "ENG", label: "Engineering" },
-  { value: "GST", label: "Gen. Studies" },
-  { value: "SIW", label: "SIWES" },
-];
+import { CATEGORY_FILTERS } from "@/lib/courseCategories";
 
 const levels = [
   { value: "all", label: "All Levels" },
@@ -33,23 +21,6 @@ const semesters = [
   { value: 2, label: "Rain" },
 ];
 
-const FUTO_LOGO = "https://upload.wikimedia.org/wikipedia/en/1/16/FUTO_logo.png";
-
-const CATEGORY_IMAGES = {
-  CSC: FUTO_LOGO,
-  CIT: FUTO_LOGO,
-  MTH: FUTO_LOGO,
-  PHY: FUTO_LOGO,
-  CHM: FUTO_LOGO,
-  BIO: FUTO_LOGO,
-  ENG: FUTO_LOGO,
-  GST: FUTO_LOGO,
-  STA: FUTO_LOGO,
-  IFT: FUTO_LOGO,
-  SIW: FUTO_LOGO,
-  default: FUTO_LOGO,
-};
-
 export default function Courses() {
   const urlParams = new URLSearchParams(window.location.search);
   const initialCat = urlParams.get("cat") || "all";
@@ -61,13 +32,12 @@ export default function Courses() {
   const [semester, setSemester] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: courses, isLoading } = useQuery({
+  const { data: courses = [], isLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
       const res = await apiClient.get("/courses");
       return res.data;
     },
-    initialData: [],
   });
 
   const filtered = useMemo(() => {
@@ -174,7 +144,7 @@ export default function Courses() {
               {/* Category filter */}
               <div className="flex flex-wrap gap-1.5 items-center">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground mr-2">Subject:</span>
-                {categories.map((cat) => (
+                {CATEGORY_FILTERS.map((cat) => (
                   <button
                     key={cat.value}
                     onClick={() => setCategory(cat.value)}
@@ -225,7 +195,7 @@ export default function Courses() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
               >
-                <CourseCard course={course} categoryImages={CATEGORY_IMAGES} />
+                <CourseCard course={course} />
               </motion.div>
             ))}
           </div>
