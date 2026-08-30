@@ -6,43 +6,14 @@ import { motion } from "framer-motion";
 import { Clock, Users, Star, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import CourseContent from "@/components/courses/CourseContent";
 import TutorList from "@/components/courses/TutorList";
+import CourseIcon from "@/components/courses/CourseIcon";
+import { CATEGORY_LABELS } from "@/lib/courseCategories";
 import { useAuth } from '@/lib/AuthContext';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-const FUTO_LOGO = "https://upload.wikimedia.org/wikipedia/en/1/16/FUTO_logo.png";
-
-const CATEGORY_IMAGES = {
-  CSC: FUTO_LOGO,
-  CIT: FUTO_LOGO,
-  MTH: FUTO_LOGO,
-  PHY: FUTO_LOGO,
-  CHM: FUTO_LOGO,
-  BIO: FUTO_LOGO,
-  ENG: FUTO_LOGO,
-  GST: FUTO_LOGO,
-  STA: FUTO_LOGO,
-  IFT: FUTO_LOGO,
-  SIW: FUTO_LOGO,
-  default: FUTO_LOGO,
-};
-
-const categoryLabels = {
-  CSC: "Computer Science",
-  CIT: "Computer Info Tech",
-  MTH: "Mathematics",
-  PHY: "Physics",
-  CHM: "Chemistry",
-  BIO: "Biology",
-  ENG: "Engineering",
-  GST: "General Studies",
-  STA: "Statistics",
-  IFT: "Info Technology",
-  SIW: "Industrial Training",
-};
 
 export default function CourseDetail() {
   const { id } = useParams();
@@ -127,7 +98,6 @@ export default function CourseDetail() {
     );
   }
 
-  const imageUrl = course.image_url || CATEGORY_IMAGES[course.category] || CATEGORY_IMAGES.default;
 
   return (
     <div className="pt-28 pb-20">
@@ -176,24 +146,30 @@ export default function CourseDetail() {
           {/* Left — Static Anchor */}
           <div className="lg:col-span-2">
             <div className="lg:sticky lg:top-28">
-              <div className="relative aspect-[4/3] rounded-sm overflow-hidden mb-6">
-                <img src={imageUrl} alt={course.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 to-transparent" />
+              <div className="flex items-start gap-5 mb-6">
+                <CourseIcon
+                  category={course.category}
+                  imageUrl={course.image_url}
+                  alt={course.title}
+                  size="lg"
+                  className="mt-1"
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {course.course_code && (
+                      <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-sm">
+                        {course.course_code}
+                      </span>
+                    )}
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
+                      {CATEGORY_LABELS[course.category] || course.category}
+                    </span>
+                  </div>
+                  <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+                    {course.title}
+                  </h1>
+                </div>
               </div>
-
-              <div className="flex items-center gap-2 mb-3">
-                {course.course_code && (
-                  <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-sm">
-                    {course.course_code}
-                  </span>
-                )}
-                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
-                  {categoryLabels[course.category] || course.category}
-                </span>
-              </div>
-              <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-4 leading-tight">
-                {course.title}
-              </h1>
 
               <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6 flex-wrap">
                 {course.level && (
