@@ -146,11 +146,22 @@ export default function CourseContent({ courseId, course }) {
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
-                        className="px-4 pb-4 border-t border-border/30 pt-4 prose prose-sm max-w-none"
+                        className="px-4 pb-4 border-t border-border/30 pt-4"
                       >
-                        <div className="text-sm text-muted-foreground leading-relaxed">
-                          <ReactMarkdown>{doc.content}</ReactMarkdown>
-                        </div>
+                        {doc.source_type === "google_drive" && doc.source_url ? (
+                          <a
+                            href={doc.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 border border-border/60 px-3 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:border-primary/40 transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" /> View on Google Drive
+                          </a>
+                        ) : (
+                          <div className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none">
+                            <ReactMarkdown>{doc.content}</ReactMarkdown>
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </div>
