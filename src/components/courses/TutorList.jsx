@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -60,7 +60,7 @@ function RateTutor({ tutorId, courseId, onDone }) {
   );
 }
 
-export default function TutorList({ courseId }) {
+export default function TutorList({ courseId, showEmpty = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [ratingTutorId, setRatingTutorId] = useState(null);
@@ -84,7 +84,20 @@ export default function TutorList({ courseId }) {
 
   const tutors = data?.tutors || [];
 
-  if (isLoading || tutors.length === 0) return null;
+  if (isLoading) return null;
+
+  if (tutors.length === 0) {
+    if (!showEmpty) return null;
+    return (
+      <div className="text-center py-12 border border-border/30 rounded-sm">
+        <GraduationCap className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+        <p className="text-sm text-muted-foreground mb-2">No tutors for this course yet.</p>
+        <Link to="/become-tutor" className="text-xs text-primary hover:underline">
+          Be the first to sign up as a tutor for it
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-12">
