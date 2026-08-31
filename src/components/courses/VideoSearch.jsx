@@ -75,7 +75,11 @@ export default function VideoSearch({ courseId, courseTitle }) {
 
         {searchMutation.isError && (
           <p className="text-sm text-destructive mb-4">
-            {searchMutation.error?.response?.data?.message || "Search failed."}
+            {searchMutation.error?.response?.data?.message
+              || (searchMutation.error?.request
+                    ? `No response from the server (${searchMutation.error.message}). This usually means a CORS or network issue reaching the backend.`
+                    : searchMutation.error?.message)
+              || "Search failed."}
           </p>
         )}
 
