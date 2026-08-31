@@ -7,6 +7,7 @@ import { BookOpen, TrendingUp, CheckCircle2, Clock } from "lucide-react";
 import EnrolledCourseCard from "@/components/dashboard/EnrolledCourseCard";
 import StudyGroups from "@/components/community/StudyGroups";
 import ChatRooms from "@/components/community/ChatRooms";
+import TutorSearch from "@/components/community/TutorSearch";
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Community() {
@@ -141,6 +142,9 @@ export default function Community() {
             </div>
           )}
         </div>
+
+        {/* Find a Tutor */}
+        <TutorSearch />
 
         {/* Study Groups */}
         <StudyGroups />
