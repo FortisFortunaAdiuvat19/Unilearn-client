@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import ContentGenerator from "./ContentGenerator";
+import VideoSearch from "./VideoSearch";
 import { useAuth } from "@/lib/AuthContext";
 
 const sourceLabels = {
@@ -175,6 +176,11 @@ export default function CourseContent({ courseId, course }) {
       {/* Videos tab */}
       {activeTab === "videos" && (
         <div>
+          {user?.role === "admin" && (
+            <div className="mb-4">
+              <VideoSearch courseId={courseId} courseTitle={course?.title} />
+            </div>
+          )}
           {videos.length === 0 ? (
             <EmptyState icon={Youtube} text="No videos yet. Generate course content to find relevant YouTube videos." />
           ) : (
