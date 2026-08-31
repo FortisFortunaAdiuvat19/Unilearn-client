@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FileText, Youtube, ClipboardList, ChevronDown, ChevronUp,
-  ExternalLink, FileQuestion, GraduationCap, ArrowRight,
+  ExternalLink, FileQuestion, GraduationCap, ArrowRight, Calendar,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import ContentGenerator from "./ContentGenerator";
@@ -37,6 +37,7 @@ const tabs = [
   { id: "documents", label: "Documents", icon: FileText },
   { id: "videos", label: "Videos", icon: Youtube },
   { id: "assessments", label: "Assessments", icon: ClipboardList },
+  { id: "scheme", label: "Scheme of Work", icon: Calendar },
 ];
 
 export default function CourseContent({ courseId, course }) {
@@ -282,6 +283,36 @@ export default function CourseContent({ courseId, course }) {
                   </Link>
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Scheme of Work tab */}
+      {activeTab === "scheme" && (
+        <div>
+          {(course?.scheme_of_work || []).length === 0 ? (
+            <EmptyState icon={Calendar} text="No scheme of work has been added for this course yet." />
+          ) : (
+            <div className="overflow-x-auto border border-border/40 rounded-sm">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/40 bg-muted/30">
+                    <th className="text-left py-3 px-4 font-semibold uppercase tracking-wider text-[10px] text-muted-foreground w-28">Week</th>
+                    <th className="text-left py-3 px-4 font-semibold uppercase tracking-wider text-[10px] text-muted-foreground">Topic</th>
+                    <th className="text-left py-3 px-4 font-semibold uppercase tracking-wider text-[10px] text-muted-foreground">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {course.scheme_of_work.map((row, i) => (
+                    <tr key={i} className="border-b border-border/20 last:border-0">
+                      <td className="py-3 px-4 font-mono text-xs text-primary whitespace-nowrap align-top">{row.week}</td>
+                      <td className="py-3 px-4 font-medium align-top">{row.topic}</td>
+                      <td className="py-3 px-4 text-muted-foreground align-top">{row.details}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
