@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import apiClient from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Loader2, Sparkles } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 
 const CATEGORIES = ["CSC", "CIT", "MTH", "PHY", "CHM", "BIO", "ENG", "GST", "STA", "IFT", "SIW"];
 const LEVELS = [100, 200, 300, 400, 500];
@@ -62,29 +60,6 @@ export default function CourseForm({
   const updateModule = (index, key, value) =>
     setModules((m) => m.map((mod, i) => (i === index ? { ...mod, [key]: value } : mod)));
   const removeModule = (index) => setModules((m) => m.filter((_, i) => i !== index));
-
-  const generateModulesMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiClient.post("/courses/generate-modules", {
-        title: form.title,
-        description: form.description || form.long_description,
-        category: form.category,
-        level: form.level ? Number(form.level) : undefined,
-      });
-      return res.data.modules || [];
-    },
-    onSuccess: (generated) => {
-      setModules((prev) => [
-        ...prev,
-        ...generated.map((m) => ({
-          title: m.title || "",
-          description: m.description || "",
-          duration_minutes: m.duration_minutes != null ? String(m.duration_minutes) : "",
-          content_type: m.content_type || "text",
-        })),
-      ]);
-    },
-  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -311,33 +286,11 @@ export default function CourseForm({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">Modules</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => generateModulesMutation.mutate()}
-              disabled={!form.title.trim() || generateModulesMutation.isPending}
-              title={!form.title.trim() ? "Add a title first" : undefined}
-            >
-              {generateModulesMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4 mr-1" />
-              )}
-              Generate with AI
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={addModule}>
-              <Plus className="w-4 h-4 mr-1" /> Add module
-            </Button>
-          </div>
+          <Button type="button" variant="outline" size="sm" onClick={addModule}>
+            <Plus className="w-4 h-4 mr-1" /> Add module
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          {generateModulesMutation.isError && (
-            <p className="text-xs text-destructive">
-              {generateModulesMutation.error?.response?.data?.message || "Failed to generate modules."}
-            </p>
-          )}
           {modules.length === 0 && (
             <p className="text-sm text-muted-foreground">
               No modules yet — add at least one so students have something to work through in the learning lab.
