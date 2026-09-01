@@ -5,7 +5,7 @@ import apiClient from "@/api/apiClient";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Check, X, FileQuestion, GraduationCap,
-  Award, AlertCircle, Loader2, Lightbulb
+  Award, AlertCircle, Loader2, Lightbulb, History
 } from "lucide-react";
 
 // Should match IMPROVEMENT_THRESHOLD in unilearn-server/routes/recommendations.js —
@@ -21,6 +21,15 @@ export default function AssessmentPlayer() {
       const res = await apiClient.get(`/assessments/${id}`);
       return res.data;
     },
+  });
+
+  const { data: pastResults = [] } = useQuery({
+    queryKey: ["assessment-results", id],
+    queryFn: async () => {
+      const res = await apiClient.get(`/assessments/${id}/results`);
+      return res.data;
+    },
+    enabled: !!id,
   });
 
   const isExam = assessment?.type === "exam";
@@ -147,6 +156,35 @@ export default function AssessmentPlayer() {
         <h1 className="font-display text-3xl font-bold tracking-tight mb-2">{assessment.title}</h1>
         {assessment.description && (
           <p className="text-sm text-muted-foreground mb-8">{assessment.description}</p>
+        )}
+
+        {/* Past attempts */}
+        {!submitted && step === 0 && pastResults.length > 0 && (
+          <div className="border border-border/40 rounded-sm p-4 mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <History className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Your Past Attempts
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {pastResults.slice(0, 5).map((result) => (
+                <div key={result._id} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {new Date(result.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                  <span className={hasObjective ? `font-semibold ${result.objective_percent >= IMPROVEMENT_THRESHOLD ? "text-emerald-600" : "text-muted-foreground"}` : "text-xs text-muted-foreground"}>
+                    {hasObjective ? `${result.objective_percent}%` : "Completed"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {pastResults.length > 5 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                +{pastResults.length - 5} earlier attempt{pastResults.length - 5 === 1 ? "" : "s"}
+              </p>
+            )}
+          </div>
         )}
 
         {/* Progress bar */}
