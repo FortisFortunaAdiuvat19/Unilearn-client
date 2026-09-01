@@ -6,13 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -26,7 +19,7 @@ export default function ChatRooms() {
   const { user: currentUser } = useAuth();
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", type: "group", description: "" });
+  const [form, setForm] = useState({ name: "", description: "" });
 
   const { data: chatrooms = [] } = useQuery({
     queryKey: ["chatrooms"],
@@ -45,7 +38,7 @@ export default function ChatRooms() {
     onSuccess: (room) => {
       queryClient.invalidateQueries({ queryKey: ["chatrooms"] });
       setDialogOpen(false);
-      setForm({ name: "", type: "group", description: "" });
+      setForm({ name: "", description: "" });
       setSelectedRoomId(room._id);
     },
   });
@@ -146,22 +139,6 @@ export default function ChatRooms() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
             />
-            <Select
-              value={form.type}
-              onValueChange={(v) => setForm({ ...form, type: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="group">
-                  Group — Multiple students + tutor
-                </SelectItem>
-                <SelectItem value="individual">
-                  Individual — 1-on-1 with tutor
-                </SelectItem>
-              </SelectContent>
-            </Select>
             <Textarea
               placeholder="Description (optional)"
               value={form.description}
