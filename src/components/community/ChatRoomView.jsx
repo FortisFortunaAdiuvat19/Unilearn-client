@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import apiClient from "@/api/apiClient";
-import { Send, Users, User, MessageSquare } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { Send, Users, User, MessageSquare, ShieldAlert } from "lucide-react";
 import { io } from "socket.io-client";
 
 export default function ChatRoomView({ room, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [accessDenied, setAccessDenied] = useState(false);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
@@ -16,6 +18,7 @@ export default function ChatRoomView({ room, currentUser }) {
     }
 
     let mounted = true;
+    setAccessDenied(false);
 
     // Fetch message history
     const fetchHistory = async () => {
@@ -23,29 +26,41 @@ export default function ChatRoomView({ room, currentUser }) {
         const res = await apiClient.get(`/chatrooms/${room._id}/messages`);
         if (mounted) setMessages(res.data);
       } catch (err) {
+        if (mounted && err.response?.status === 403) setAccessDenied(true);
         console.error("Failed to load message history:", err);
       }
     };
     fetchHistory();
 
-    // Initialize Socket.io connection
+    // Initialize Socket.io connection — the token is required now; the
+    // server rejects the handshake entirely without one.
     const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
-    socketRef.current = io(backendUrl);
+    const connectSocket = async () => {
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      if (!mounted || !token) return;
 
-    socketRef.current.on('connect', () => {
-      // Join the specific socket room
-      socketRef.current.emit('joinRoom', room._id);
-    });
+      socketRef.current = io(backendUrl, { auth: { token } });
 
-    // Listen for incoming messages
-    socketRef.current.on('receiveMessage', (message) => {
-      if (mounted) {
-        setMessages((prev) => {
-          if (prev.some((m) => m._id === message._id)) return prev;
-          return [...prev, message];
-        });
-      }
-    });
+      socketRef.current.on('connect', () => {
+        // Join the specific socket room
+        socketRef.current.emit('joinRoom', room._id);
+      });
+
+      socketRef.current.on('roomAccessDenied', () => {
+        if (mounted) setAccessDenied(true);
+      });
+
+      // Listen for incoming messages
+      socketRef.current.on('receiveMessage', (message) => {
+        if (mounted) {
+          setMessages((prev) => {
+            if (prev.some((m) => m._id === message._id)) return prev;
+            return [...prev, message];
+          });
+        }
+      });
+    };
+    connectSocket();
 
     return () => {
       mounted = false;
@@ -85,6 +100,19 @@ export default function ChatRoomView({ room, currentUser }) {
           <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">
             Select a chatroom to start chatting
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px] text-center p-6">
+        <div>
+          <ShieldAlert className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
+            You don't have access to this conversation.
           </p>
         </div>
       </div>
