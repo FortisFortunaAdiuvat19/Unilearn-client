@@ -26,6 +26,10 @@ export default function AdminRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (!user?.matric_number) {
+    return <Navigate to="/complete-registration" state={{ from: location }} replace />;
+  }
+
   if (user?.role !== 'admin') {
     return forbiddenElement;
   }
