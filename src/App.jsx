@@ -24,6 +24,7 @@ import CreateCourse from '@/pages/CreateCourse';
 import EditCourse from '@/pages/EditCourse';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import CompleteRegistration from '@/pages/CompleteRegistration';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 
@@ -63,6 +64,11 @@ const AuthenticatedApp = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
+
+        {/* Standalone — not wrapped in ProtectedRoute, since that's what
+            redirects here in the first place; it does its own auth check
+            internally instead. */}
+        <Route path="/complete-registration" element={<CompleteRegistration />} />
 
         {/* Requires login */}
         <Route element={<ProtectedRoute />}>
