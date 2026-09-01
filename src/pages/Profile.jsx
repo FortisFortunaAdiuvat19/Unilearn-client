@@ -5,6 +5,7 @@ import ProgressTracker from "@/components/profile/ProgressTracker";
 import CourseRecommendation from "@/components/profile/CourseRecommendation";
 import CompletionSummary from "@/components/profile/CompletionSummary";
 import PerformanceInsights from "@/components/profile/PerformanceInsights";
+import StreakCounter from "@/components/profile/StreakCounter";
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Profile() {
@@ -38,6 +39,8 @@ export default function Profile() {
           </h1>
           <p className="text-sm text-muted-foreground mt-2">{user?.email}</p>
         </div>
+
+        <StreakCounter user={user} />
 
         <CompletionSummary courses={courses} enrollments={enrollments} />
         <PerformanceInsights />
