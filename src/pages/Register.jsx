@@ -1,19 +1,24 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth, googleProvider, signInWithPopup } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import apiClient from "@/api/apiClient";
+import { describeError } from "@/lib/errorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
+import { UserPlus, Mail, Lock, Hash, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
+
+const MATRIC_NUMBER_PATTERN = /^\d{11}$/;
 
 export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/community";
   const [email, setEmail] = useState("");
+  const [matricNumber, setMatricNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,11 +31,28 @@ export default function Register() {
       setError("Passwords do not match");
       return;
     }
+    if (!MATRIC_NUMBER_PATTERN.test(matricNumber)) {
+      setError("Matriculation number must be exactly 11 digits — your 4-digit registration year followed by 7 digits, e.g. 20211263825.");
+      return;
+    }
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // Optional: Update display name if you add a name field to the form
-      // await updateProfile(userCredential.user, { displayName: "Student" });
+      await createUserWithEmailAndPassword(auth, email, password);
+      try {
+        // Firebase and Mongo are separate systems — the account above
+        // only exists in Firebase. This is what actually records the
+        // matric number, and it's where a duplicate gets caught.
+        await apiClient.post("/auth/sync", { matric_number: matricNumber });
+      } catch (syncErr) {
+        // The Firebase account succeeded but the matric number didn't —
+        // most likely a duplicate. Don't leave an orphaned Firebase
+        // account with no way to ever complete registration (retrying
+        // would just fail with "email already in use"). Roll it back so
+        // they can fix the number and try again cleanly.
+        await auth.currentUser?.delete().catch(() => {});
+        setError(describeError(syncErr, "Registration failed."));
+        return;
+      }
       navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || "Registration failed");
@@ -100,6 +122,23 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10 h-12"
+              required
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="matric">Matriculation Number</Label>
+          <div className="relative">
+            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+            <Input
+              id="matric"
+              type="text"
+              inputMode="numeric"
+              placeholder="e.g. 20211263825"
+              value={matricNumber}
+              onChange={(e) => setMatricNumber(e.target.value.replace(/\D/g, "").slice(0, 11))}
+              className="pl-10 h-12"
+              maxLength={11}
               required
             />
           </div>
