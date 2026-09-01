@@ -106,6 +106,22 @@ export const AuthProvider = ({ children }) => {
     setAuthChecked(true);
   };
 
+  // For refreshing the merged user object after something changes it
+  // server-side without a Firebase auth-state change happening (e.g. the
+  // account-completion page setting a matric number) — checkUserAuth
+  // above is a one-time-only fallback and won't re-run once authChecked
+  // is already true, so this exists as its own, always-runnable version.
+  const refreshUser = async () => {
+    if (!auth.currentUser) return;
+    try {
+      const response = await apiClient.post('/auth/sync');
+      setUser({ ...auth.currentUser, ...response.data.user });
+      setAuthError(null);
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -115,7 +131,8 @@ export const AuthProvider = ({ children }) => {
       authChecked,
       loginWithGoogle,
       logout,
-      checkUserAuth
+      checkUserAuth,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>
