@@ -11,7 +11,7 @@ const DefaultFallback = () => (
 );
 
 export default function ProtectedRoute({ fallback = <DefaultFallback /> }) {
-  const { isAuthenticated, isLoadingAuth, authChecked, authError, checkUserAuth } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth, authChecked, authError, checkUserAuth } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -38,6 +38,15 @@ export default function ProtectedRoute({ fallback = <DefaultFallback /> }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Catches anyone signed in without a matric number — most commonly
+  // Google sign-in, which has no form step to collect one, but also any
+  // account that predates this field existing at all. Not applied to
+  // /complete-registration itself (that route isn't wrapped in
+  // ProtectedRoute), so there's no loop.
+  if (!user?.matric_number) {
+    return <Navigate to="/complete-registration" state={{ from: location }} replace />;
   }
 
   return <Outlet />;
