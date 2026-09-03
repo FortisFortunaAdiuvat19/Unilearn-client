@@ -173,7 +173,7 @@ export default function Navbar() {
                       to="/login"
                       className="block font-display text-4xl md:text-5xl font-semibold py-3 transition-colors hover:text-primary"
                     >
-                      Log In
+                      Log In/Sign In
                     </Link>
                   )}
                 </motion.div>
