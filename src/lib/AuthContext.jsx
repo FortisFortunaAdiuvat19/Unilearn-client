@@ -39,8 +39,21 @@ export const AuthProvider = ({ children }) => {
             displayName: firebaseUser.displayName,
           });
 
-          // Merge Firebase data with custom DB roles (e.g., admin)
-          setUser({ ...firebaseUser, ...response.data.user });
+          // Merge Firebase data with custom DB roles (e.g., admin).
+          // matric_number is preserved from prior state if this response
+          // doesn't include one — it's a sparse field, so a sync response
+          // queried before it was set genuinely omits it entirely. On
+          // registration, this listener's sync (no matric_number in its
+          // own request) races against Register.jsx's explicit one (which
+          // does send it); without this guard, whichever response's
+          // setUser() call happens to run last wins, and a plain
+          // replacement here could silently erase an already-correct
+          // matric_number with a stale, pre-save snapshot.
+          setUser((prev) => ({
+            ...firebaseUser,
+            ...response.data.user,
+            matric_number: response.data.user.matric_number ?? prev?.matric_number,
+          }));
           setIsAuthenticated(true);
           setAuthError(null);
         } catch (error) {
@@ -89,7 +102,11 @@ export const AuthProvider = ({ children }) => {
     if (currentUser) {
       try {
         const response = await apiClient.post('/auth/sync', {});
-        setUser({ ...currentUser, ...response.data.user });
+        setUser((prev) => ({
+          ...currentUser,
+          ...response.data.user,
+          matric_number: response.data.user.matric_number ?? prev?.matric_number,
+        }));
         setIsAuthenticated(true);
         setAuthError(null);
       } catch (error) {
@@ -115,7 +132,11 @@ export const AuthProvider = ({ children }) => {
     if (!auth.currentUser) return;
     try {
       const response = await apiClient.post('/auth/sync', {});
-      setUser({ ...auth.currentUser, ...response.data.user });
+      setUser((prev) => ({
+        ...auth.currentUser,
+        ...response.data.user,
+        matric_number: response.data.user.matric_number ?? prev?.matric_number,
+      }));
       setAuthError(null);
     } catch (error) {
       console.error('Failed to refresh user:', error);
