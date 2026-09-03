@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { describeFirebaseAuthError } from "@/lib/errorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +29,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(describeFirebaseAuthError(err, "Invalid email or password."));
     } finally {
       setLoading(false);
     }
@@ -39,7 +40,8 @@ export default function Login() {
       await signInWithPopup(auth, googleProvider);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || "Google sign in failed");
+      const message = describeFirebaseAuthError(err, "Google sign-in failed. Please try again.");
+      if (message) setError(message);
     }
   };
 
