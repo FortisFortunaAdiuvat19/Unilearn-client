@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/api/apiClient";
 import { Search, SlidersHorizontal, X } from "lucide-react";
@@ -22,15 +23,24 @@ const semesters = [
 ];
 
 export default function Courses() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialCat = urlParams.get("cat") || "all";
-  const initialQ = urlParams.get("q") || "";
+  const [searchParams] = useSearchParams();
 
-  const [search, setSearch] = useState(initialQ);
-  const [category, setCategory] = useState(initialCat);
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [category, setCategory] = useState(searchParams.get("cat") || "all");
   const [level, setLevel] = useState("all");
   const [semester, setSemester] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+
+  // React Router doesn't remount this page just because the query string
+  // changed — the route path is still /courses either way. That means a
+  // useState initializer alone only ever picks up the URL on this
+  // component's very first mount: clicking a second footer subject link
+  // while already on this page updates the URL but silently does nothing,
+  // since nothing re-reads it. This effect re-syncs on every change.
+  useEffect(() => {
+    setCategory(searchParams.get("cat") || "all");
+    setSearch(searchParams.get("q") || "");
+  }, [searchParams]);
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["courses"],
