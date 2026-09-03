@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/AuthContext";
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "Discover", path: "/courses" },
-  { label: "Community", path: "/community" },
   { label: "About", path: "/about" },
 ];
 
@@ -32,6 +31,13 @@ export default function Navbar() {
     navigate("/");
   };
 
+  // Community only makes sense once signed in — shared by the desktop
+  // nav and the mobile veil-menu below, so both stay in sync.
+  const visibleNavLinks = [
+    ...navLinks,
+    ...(isAuthenticated ? [{ label: "Community", path: "/community" }] : []),
+  ];
+
   return (
     <>
       <header
@@ -39,8 +45,8 @@ export default function Navbar() {
           scrolled ? "glass-terminal py-3" : "py-5 bg-transparent"
         }`}
       >
-        <div className="max-w-[90rem] mx-auto px-6 md:px-10 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
+        <div className="max-w-[90rem] mx-auto px-6 md:px-10 flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
             <div className="w-8 h-8 rounded-sm bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-display text-sm font-bold">U</span>
             </div>
@@ -49,12 +55,12 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+          <nav className="hidden md:flex items-center gap-8 overflow-x-auto min-w-0 [scrollbar-width:thin] [-ms-overflow-style:auto]">
+            {visibleNavLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium tracking-wide uppercase transition-colors hover:text-primary ${
+                className={`text-sm font-medium tracking-wide uppercase transition-colors hover:text-primary whitespace-nowrap flex-shrink-0 ${
                   location.pathname === link.path ? "text-primary" : "text-muted-foreground"
                 }`}
               >
@@ -63,7 +69,7 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <Link
               to="/courses"
               className="hidden md:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -92,7 +98,7 @@ export default function Navbar() {
                 to="/login"
                 className="hidden md:inline-flex items-center gap-2 border border-primary/40 text-primary px-4 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:bg-primary/5 transition-colors"
               >
-                <LogIn className="w-3.5 h-3.5" /> Log In/Sign In
+                <LogIn className="w-3.5 h-3.5" /> Log In
               </Link>
             )}
             <button
@@ -135,7 +141,7 @@ export default function Navbar() {
               </div>
               <nav className="flex-1 px-6 md:px-10 flex flex-col justify-center gap-2">
                 {[
-                  ...navLinks,
+                  ...visibleNavLinks,
                   ...(isAuthenticated ? [{ label: "Profile", path: "/profile" }] : []),
                   ...(isAuthenticated ? [{ label: "Become a Tutor", path: "/become-tutor" }] : []),
                   ...(user?.role === "admin" ? [{ label: "New Course", path: "/admin/create-course" }] : []),
@@ -173,7 +179,7 @@ export default function Navbar() {
                       to="/login"
                       className="block font-display text-4xl md:text-5xl font-semibold py-3 transition-colors hover:text-primary"
                     >
-                      Log In/Sign In
+                      Log In
                     </Link>
                   )}
                 </motion.div>
