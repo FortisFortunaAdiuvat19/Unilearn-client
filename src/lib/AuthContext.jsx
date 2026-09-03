@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
     const currentUser = auth.currentUser;
     if (currentUser) {
       try {
-        const response = await apiClient.post('/auth/sync');
+        const response = await apiClient.post('/auth/sync', {});
         setUser({ ...currentUser, ...response.data.user });
         setIsAuthenticated(true);
         setAuthError(null);
@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     if (!auth.currentUser) return;
     try {
-      const response = await apiClient.post('/auth/sync');
+      const response = await apiClient.post('/auth/sync', {});
       setUser({ ...auth.currentUser, ...response.data.user });
       setAuthError(null);
     } catch (error) {
