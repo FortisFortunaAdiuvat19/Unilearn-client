@@ -32,9 +32,7 @@ const footerSections = [
   {
     title: "Support",
     links: [
-      { label: "Help Center", path: "/about" },
-      { label: "Guidelines", path: "/about" },
-      { label: "Contact", path: "/about" },
+      { label: "Contact Support", path: "/support" },
     ],
   },
 ];
