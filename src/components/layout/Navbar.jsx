@@ -92,7 +92,7 @@ export default function Navbar() {
                 to="/login"
                 className="hidden md:inline-flex items-center gap-2 border border-primary/40 text-primary px-4 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:bg-primary/5 transition-colors"
               >
-                <LogIn className="w-3.5 h-3.5" /> Log In
+                <LogIn className="w-3.5 h-3.5" /> Log In/Sign In
               </Link>
             )}
             <button
