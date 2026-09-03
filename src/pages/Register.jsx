@@ -4,6 +4,7 @@ import { auth, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import apiClient from "@/api/apiClient";
 import { describeError, describeFirebaseAuthError } from "@/lib/errorMessage";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ const PASSWORD_PATTERN = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
 export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshUser } = useAuth();
   const from = location.state?.from?.pathname || "/community";
   const [email, setEmail] = useState("");
   const [matricNumber, setMatricNumber] = useState("");
@@ -62,6 +64,15 @@ export default function Register() {
         setError(describeError(syncErr, "Registration failed."));
         return;
       }
+      // The call above only saves the matric number server-side — it
+      // doesn't itself update the app's local copy of the user. The only
+      // thing that normally does is the automatic sync AuthContext fires
+      // on every auth-state change, but that one runs independently and
+      // sends no matric number of its own; if its query happens to land
+      // before this save does, it has nothing to reflect. Refreshing
+      // explicitly here, now that the save is confirmed, guarantees the
+      // next page actually sees it rather than bouncing back here.
+      await refreshUser();
       navigate(from, { replace: true });
     } catch (err) {
       setError(describeFirebaseAuthError(err, "Registration failed. Please try again."));
