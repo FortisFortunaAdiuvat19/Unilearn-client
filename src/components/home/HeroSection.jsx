@@ -88,9 +88,9 @@ export default function HeroSection({ heroImage }) {
               className="flex gap-10 mt-12"
             >
               {[
-                { value: "500+", label: "Courses" },
-                { value: "2.4k", label: "Students" },
-                { value: "150+", label: "Instructors" },
+                { value: "100+", label: "Courses" },
+                { value: "500+", label: "Course Documents" },
+                { value: "150+", label: "Video guide links" },
               ].map((stat) => (
                 <div key={stat.label}>
                   <p className="font-display text-2xl md:text-3xl font-bold">{stat.value}</p>
@@ -117,7 +117,7 @@ export default function HeroSection({ heroImage }) {
               {/* Floating badge */}
               <div className="absolute -bottom-4 -left-4 glass-terminal rounded-sm px-5 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary">Live</p>
-                <p className="text-sm font-medium mt-0.5">24 active sessions</p>
+                <p className="text-sm font-medium mt-0.5">Active sessions</p>
               </div>
             </div>
           </motion.div>
