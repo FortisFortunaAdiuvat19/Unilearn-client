@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import apiClient from "@/api/apiClient";
-import { describeError } from "@/lib/errorMessage";
+import { describeError, describeFirebaseAuthError } from "@/lib/errorMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,11 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 
 const MATRIC_NUMBER_PATTERN = /^\d{11}$/;
+// At least 8 characters, at least one uppercase letter, at least one
+// character that isn't a letter or digit (a symbol) — whitespace doesn't
+// count toward that last part, so a password can't satisfy it with a
+// plain space.
+const PASSWORD_PATTERN = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
 
 export default function Register() {
   const navigate = useNavigate();
@@ -27,6 +32,10 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!PASSWORD_PATTERN.test(password)) {
+      setError("Password must be at least 8 characters and include one capital letter and one special character.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -55,7 +64,7 @@ export default function Register() {
       }
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(describeFirebaseAuthError(err, "Registration failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -66,7 +75,8 @@ export default function Register() {
       await signInWithPopup(auth, googleProvider);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || "Google sign in failed");
+      const message = describeFirebaseAuthError(err, "Google sign-in failed. Please try again.");
+      if (message) setError(message);
     }
   };
 
@@ -158,6 +168,9 @@ export default function Register() {
               required
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            At least 8 characters, with one capital letter and one special character.
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm Password</Label>
