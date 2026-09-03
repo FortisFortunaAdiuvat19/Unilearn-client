@@ -17,6 +17,7 @@ import CourseDetail from '@/pages/CourseDetail';
 import LearningLab from '@/pages/LearningLab';
 import Community from '@/pages/Community';
 import About from '@/pages/About';
+import Support from '@/pages/Support';
 import Profile from '@/pages/Profile';
 import AssessmentPlayer from '@/pages/AssessmentPlayer';
 import BecomeTutor from '@/pages/BecomeTutor';
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
         <Route path="/courses" element={<Courses />} />
         <Route path="/course/:id" element={<CourseDetail />} />
         <Route path="/about" element={<About />} />
+        <Route path="/support" element={<Support />} />
 
         {/* Auth pages — only for logged-out visitors */}
         <Route element={<PublicOnlyRoute />}>
