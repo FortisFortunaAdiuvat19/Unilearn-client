@@ -14,7 +14,8 @@ import AppLayout from '@/components/layout/AppLayout';
 import Home from '@/pages/Home';
 import Courses from '@/pages/Courses';
 import CourseDetail from '@/pages/CourseDetail';
-import LearningLab from '@/pages/LearningLab';
+import CourseModules from '@/pages/CourseModules';
+import ModuleViewer from '@/pages/ModuleViewer';
 import Community from '@/pages/Community';
 import About from '@/pages/About';
 import Support from '@/pages/Support';
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
           <Route path="/dashboard" element={<Navigate to="/community" replace />} />
           <Route path="/assessment/:id" element={<AssessmentPlayer />} />
           <Route path="/become-tutor" element={<BecomeTutor />} />
+          <Route path="/learn/:id" element={<CourseModules />} />
         </Route>
 
         {/* Requires login + admin role */}
@@ -88,9 +90,10 @@ const AuthenticatedApp = () => {
         </Route>
       </Route>
 
-      {/* LearningLab is full-screen (outside AppLayout) but still requires login */}
+      {/* Full-screen, distraction-free card viewer — deliberately outside
+          AppLayout (no navbar/footer), but still requires login */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/learn/:id" element={<LearningLab />} />
+        <Route path="/learn/:id/module/:weekIndex" element={<ModuleViewer />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
