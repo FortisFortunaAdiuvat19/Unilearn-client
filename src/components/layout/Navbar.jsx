@@ -31,11 +31,12 @@ export default function Navbar() {
     navigate("/");
   };
 
-  // Community only makes sense once signed in — shared by the desktop
-  // nav and the mobile veil-menu below, so both stay in sync.
+  // Community and Profile only make sense once signed in — shared by the
+  // desktop nav and the mobile veil-menu below, so both stay in sync.
   const visibleNavLinks = [
     ...navLinks,
     ...(isAuthenticated ? [{ label: "Community", path: "/community" }] : []),
+    ...(isAuthenticated ? [{ label: "Profile", path: "/profile" }] : []),
   ];
 
   return (
@@ -139,10 +140,9 @@ export default function Navbar() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <nav className="flex-1 px-6 md:px-10 flex flex-col justify-center gap-2">
+              <nav className="flex-1 overflow-y-auto px-6 md:px-10 py-6 flex flex-col justify-start gap-2">
                 {[
                   ...visibleNavLinks,
-                  ...(isAuthenticated ? [{ label: "Profile", path: "/profile" }] : []),
                   ...(isAuthenticated ? [{ label: "Become a Tutor", path: "/become-tutor" }] : []),
                   ...(user?.role === "admin" ? [{ label: "New Course", path: "/admin/create-course" }] : []),
                 ].map((link, i) => (
