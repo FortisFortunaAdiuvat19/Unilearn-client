@@ -1,5 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import BackButton from '@/components/layout/BackButton';
 
 export default function PageNotFound({}) {
     const location = useLocation();
@@ -8,6 +9,7 @@ export default function PageNotFound({}) {
     
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+            <BackButton />
             <div className="max-w-md w-full">
                 <div className="text-center space-y-6">
                     {/* 404 Error Code */}
