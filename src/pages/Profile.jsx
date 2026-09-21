@@ -1,6 +1,8 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/api/apiClient";
+import { BookOpen, ChevronRight } from "lucide-react";
 import ProgressTracker from "@/components/profile/ProgressTracker";
 import CourseRecommendation from "@/components/profile/CourseRecommendation";
 import CompletionSummary from "@/components/profile/CompletionSummary";
@@ -39,6 +41,17 @@ export default function Profile() {
           </h1>
           <p className="text-sm text-muted-foreground mt-2">{user?.email}</p>
         </div>
+
+        <Link
+          to="/my-courses"
+          className="flex items-center justify-between border border-border/40 rounded-sm p-5 mb-8 hover:border-primary/30 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-5 h-5 text-primary" />
+            <span className="font-display text-lg font-semibold">My Courses</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        </Link>
 
         <StreakCounter user={user} />
 
