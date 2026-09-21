@@ -20,6 +20,7 @@ import Community from '@/pages/Community';
 import About from '@/pages/About';
 import Support from '@/pages/Support';
 import Profile from '@/pages/Profile';
+import MyCourses from '@/pages/MyCourses';
 import AssessmentPlayer from '@/pages/AssessmentPlayer';
 import BecomeTutor from '@/pages/BecomeTutor';
 import CreateCourse from '@/pages/CreateCourse';
@@ -77,6 +78,7 @@ const AuthenticatedApp = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/community" element={<Community />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/dashboard" element={<Navigate to="/community" replace />} />
           <Route path="/assessment/:id" element={<AssessmentPlayer />} />
           <Route path="/become-tutor" element={<BecomeTutor />} />
