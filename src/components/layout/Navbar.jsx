@@ -143,6 +143,7 @@ export default function Navbar() {
               <nav className="flex-1 overflow-y-auto px-6 md:px-10 py-6 flex flex-col justify-start gap-2">
                 {[
                   ...visibleNavLinks,
+                  ...(isAuthenticated ? [{ label: "Find a Tutor", path: "/find-tutor" }] : []),
                   ...(isAuthenticated ? [{ label: "Become a Tutor", path: "/become-tutor" }] : []),
                   ...(user?.role === "admin" ? [{ label: "New Course", path: "/admin/create-course" }] : []),
                 ].map((link, i) => (

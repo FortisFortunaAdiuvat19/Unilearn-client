@@ -5,7 +5,7 @@ import apiClient from "@/api/apiClient";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Check, X, FileQuestion, GraduationCap,
-  Award, AlertCircle, Loader2, Lightbulb, History
+  Award, AlertCircle, Loader2, Lightbulb, History, ClipboardCheck
 } from "lucide-react";
 
 // Should match IMPROVEMENT_THRESHOLD in unilearn-server/routes/recommendations.js —
@@ -33,10 +33,16 @@ export default function AssessmentPlayer() {
   });
 
   const isExam = assessment?.type === "exam";
+  const isTutorQualification = assessment?.type === "tutor_qualification";
   const [step, setStep] = useState(0);
   const [theoryAnswers, setTheoryAnswers] = useState({});
   const [objectiveAnswers, setObjectiveAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  // Set from the submit response, not recomputed client-side, so the
+  // verdict always matches the pass/fail call the server actually made
+  // (and the TutorProfile update it may have triggered). null = this
+  // wasn't a tutor_qualification submission at all.
+  const [tutorQualified, setTutorQualified] = useState(null);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -52,7 +58,10 @@ export default function AssessmentPlayer() {
       });
       return res.data;
     },
-    onSuccess: () => setSubmitted(true),
+    onSuccess: (data) => {
+      setTutorQualified(data?.tutor_qualified ?? null);
+      setSubmitted(true);
+    },
   });
 
   // Videos and top tutor for this course, fetched only once results are
@@ -130,6 +139,7 @@ export default function AssessmentPlayer() {
     setStep(0);
     setTheoryAnswers({});
     setObjectiveAnswers({});
+    setTutorQualified(null);
     submitMutation.reset();
   };
 
@@ -144,13 +154,17 @@ export default function AssessmentPlayer() {
         </Link>
 
         <div className="flex items-center gap-3 mb-2">
-          {isExam ? (
+          {isTutorQualification ? (
+            <ClipboardCheck className="w-5 h-5 text-amber-600" />
+          ) : isExam ? (
             <GraduationCap className="w-5 h-5 text-primary" />
           ) : (
             <FileQuestion className="w-5 h-5 text-blue-600" />
           )}
-          <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-sm ${isExam ? "bg-primary/10 text-primary" : "bg-blue-500/10 text-blue-600"}`}>
-            {isExam ? "Preparatory Exam" : "Preparatory Test"}
+          <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-sm ${
+            isTutorQualification ? "bg-amber-500/10 text-amber-600" : isExam ? "bg-primary/10 text-primary" : "bg-blue-500/10 text-blue-600"
+          }`}>
+            {isTutorQualification ? "Tutor Qualification" : isExam ? "Preparatory Exam" : "Preparatory Test"}
           </span>
         </div>
         <h1 className="font-display text-3xl font-bold tracking-tight mb-2">{assessment.title}</h1>
@@ -259,7 +273,7 @@ export default function AssessmentPlayer() {
                     </>
                   ) : (
                     <>
-                      Submit {isExam ? "Exam" : "Test"} <Check className="w-4 h-4" />
+                      Submit {isTutorQualification ? "Assessment" : isExam ? "Exam" : "Test"} <Check className="w-4 h-4" />
                     </>
                   )}
                 </button>
@@ -364,6 +378,41 @@ export default function AssessmentPlayer() {
               )}
             </div>
 
+            {/* Tutor qualification verdict — only shown for a tutor_qualification
+                submission, using the server's own pass/fail call rather than
+                re-deriving one here. */}
+            {isTutorQualification && (
+              <div className={`border rounded-sm p-5 mb-8 text-center ${
+                tutorQualified ? "border-emerald-300 bg-emerald-50" : "border-amber-300 bg-amber-50"
+              }`}>
+                {tutorQualified ? (
+                  <>
+                    <p className="font-display text-lg font-bold text-emerald-700 mb-1">
+                      🎓 You're now a tutor for this course
+                    </p>
+                    <p className="text-sm text-emerald-700/80 mb-4">
+                      Your score cleared the 70% qualification bar — this course has been added to your tutor profile.
+                    </p>
+                    <Link
+                      to="/become-tutor"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 hover:underline"
+                    >
+                      Back to Become a Tutor <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-display text-lg font-bold text-amber-700 mb-1">
+                      Not quite — 70% needed to qualify
+                    </p>
+                    <p className="text-sm text-amber-700/80">
+                      Review the objective answers below and retake the assessment whenever you're ready.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Ways to improve — only when there's an objective score below the threshold */}
             {needsImprovement && (
               <div className="border border-primary/30 bg-primary/5 rounded-sm p-5 mb-8">
@@ -375,7 +424,7 @@ export default function AssessmentPlayer() {
                     onClick={handleRetake}
                     className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-sm text-xs font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors"
                   >
-                    Retake this {isExam ? "exam" : "test"}
+                    Retake this {isTutorQualification ? "assessment" : isExam ? "exam" : "test"}
                   </button>
                   {courseVideos[0] && (
                     <a

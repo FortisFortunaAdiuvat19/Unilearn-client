@@ -22,6 +22,19 @@ const semesters = [
   { value: 2, label: "Rain" },
 ];
 
+const RANDOM_PREVIEW_COUNT = 5;
+
+// Small Fisher-Yates shuffle — fine at catalogue size, and only ever run
+// inside a useMemo keyed on the pool it's sampling from, not on every render.
+function pickRandom(arr, n) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
+
 export default function Courses() {
   const [searchParams] = useSearchParams();
 
@@ -50,19 +63,40 @@ export default function Courses() {
     },
   });
 
-  const filtered = useMemo(() => {
+  // Category/level/semester apply regardless of what's in the search box —
+  // this is the pool search narrows further, and also what the random
+  // preview below is drawn from when the box is empty.
+  const facetFiltered = useMemo(() => {
     return courses.filter((c) => {
-      const matchSearch = !search || 
-        c.title?.toLowerCase().includes(search.toLowerCase()) ||
-        c.description?.toLowerCase().includes(search.toLowerCase()) ||
-        c.course_code?.toLowerCase().includes(search.toLowerCase()) ||
-        c.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()));
       const matchCat = category === "all" || c.category === category;
       const matchLevel = level === "all" || c.level === level;
       const matchSem = semester === "all" || c.semester === semester;
-      return matchSearch && matchCat && matchLevel && matchSem;
+      return matchCat && matchLevel && matchSem;
     });
-  }, [courses, search, category, level, semester]);
+  }, [courses, category, level, semester]);
+
+  // Recomputed only when the pool itself changes (courses load, or a
+  // facet filter changes) — never on every render — so the 5 shown stay
+  // fixed while the user is just looking, and only reshuffle on an actual
+  // refresh/re-entry to the page, per the brief: "the courses displayed
+  // can change anytime the user refreshes or re-enters the page."
+  const randomPreview = useMemo(
+    () => pickRandom(facetFiltered, RANDOM_PREVIEW_COUNT),
+    [facetFiltered]
+  );
+
+  const filtered = useMemo(() => {
+    if (!search) return randomPreview;
+    const q = search.toLowerCase();
+    return facetFiltered.filter((c) =>
+      c.title?.toLowerCase().includes(q) ||
+      c.description?.toLowerCase().includes(q) ||
+      c.course_code?.toLowerCase().includes(q) ||
+      c.tags?.some(t => t.toLowerCase().includes(q))
+    );
+  }, [search, facetFiltered, randomPreview]);
+
+  const isRandomPreview = !search && facetFiltered.length > RANDOM_PREVIEW_COUNT;
 
   return (
     <div className="pt-28 pb-20">
@@ -174,7 +208,11 @@ export default function Courses() {
 
         {/* Results count */}
         <p className="text-sm text-muted-foreground mb-6">
-          {filtered.length} course{filtered.length !== 1 ? "s" : ""} found
+          {isRandomPreview ? (
+            <>Showing {filtered.length} at random out of {facetFiltered.length} — search to browse all of them</>
+          ) : (
+            <>{filtered.length} course{filtered.length !== 1 ? "s" : ""} found</>
+          )}
         </p>
 
         {/* Grid */}

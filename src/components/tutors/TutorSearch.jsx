@@ -25,12 +25,7 @@ export default function TutorSearch() {
   }, [query, courses, selectedCourse]);
 
   return (
-    <div className="mb-16">
-      <div className="flex items-center gap-2 mb-6">
-        <GraduationCap className="w-5 h-5 text-primary" />
-        <h2 className="font-display text-2xl font-bold">Find a Tutor</h2>
-      </div>
-
+    <div>
       {!selectedCourse ? (
         <div className="relative max-w-lg">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

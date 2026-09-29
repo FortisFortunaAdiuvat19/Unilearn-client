@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import ContentGenerator from "./ContentGenerator";
+import TutorAssessmentGenerator from "./TutorAssessmentGenerator";
 import VideoSearch from "./VideoSearch";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -85,7 +86,12 @@ export default function CourseContent({ courseId, course }) {
             </span>
           )}
         </h2>
-        {user?.role === "admin" && <ContentGenerator course={course} />}
+        {user?.role === "admin" && (
+          <div className="flex flex-wrap gap-2">
+            <ContentGenerator course={course} />
+            <TutorAssessmentGenerator course={course} />
+          </div>
+        )}
       </div>
 
       {/* Tab navigation */}

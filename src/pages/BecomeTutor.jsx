@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, Plus, Trash2, Star, Loader2 } from "lucide-react";
+import { GraduationCap, Plus, Trash2, Star, Loader2, ClipboardCheck } from "lucide-react";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -21,12 +22,12 @@ function Stars({ count }) {
 }
 
 export default function BecomeTutor() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [bio, setBio] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
   const [slots, setSlots] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
-  const [courseError, setCourseError] = useState("");
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["my-tutor-profile"],
@@ -73,19 +74,17 @@ export default function BecomeTutor() {
     onSuccess: (data) => queryClient.setQueryData(["my-tutor-profile"], data),
   });
 
-  const addCourseMutation = useMutation({
+  // Qualifying for a course no longer happens by clicking "Add" here — it
+  // happens by passing that course's tutor-qualification assessment. This
+  // just looks up which assessment that is and sends the candidate there;
+  // routes/assessments.js grants the qualification itself once they submit
+  // a passing score.
+  const startAssessmentMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.post("/tutors/me", { course_id: selectedCourse });
+      const res = await apiClient.get(`/tutors/qualifying-assessment/${selectedCourse}`);
       return res.data;
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["my-tutor-profile"], data);
-      setSelectedCourse("");
-      setCourseError("");
-    },
-    onError: (err) => {
-      setCourseError(err.response?.data?.message || "Couldn't add that course.");
-    },
+    onSuccess: (data) => navigate(`/assessment/${data.assessment_id}`),
   });
 
   const registeredCourseIds = new Set((profile?.courses || []).map((c) => c.course_id));
@@ -108,8 +107,9 @@ export default function BecomeTutor() {
         <h1 className="font-display text-2xl md:text-3xl font-bold">Become a Tutor</h1>
       </div>
       <p className="text-sm text-muted-foreground mb-8">
-        Help other students in courses you've already done well in. Each course you add is checked
-        against your own test results — you'll need at least 70% on one assessment for it first.
+        Help other students in courses you know well. Pick a course below and take its tutor
+        qualification assessment — the same one every candidate for that course takes — and
+        score at least 70% on the objective section to qualify.
       </p>
 
       {(profile?.courses || []).length > 0 && (
@@ -133,7 +133,7 @@ export default function BecomeTutor() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-base">Add a course</CardTitle>
+          <CardTitle className="text-base">Qualify for a course</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2">
@@ -147,13 +147,21 @@ export default function BecomeTutor() {
             </Select>
             <Button
               type="button"
-              disabled={!selectedCourse || addCourseMutation.isPending}
-              onClick={() => addCourseMutation.mutate()}
+              disabled={!selectedCourse || startAssessmentMutation.isPending}
+              onClick={() => startAssessmentMutation.mutate()}
             >
-              {addCourseMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
+              {startAssessmentMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <><ClipboardCheck className="w-4 h-4 mr-1.5" /> Take Assessment</>
+              )}
             </Button>
           </div>
-          {courseError && <p className="text-sm text-destructive">{courseError}</p>}
+          {startAssessmentMutation.isError && (
+            <p className="text-sm text-destructive">
+              {startAssessmentMutation.error?.response?.data?.message || "Couldn't start that assessment."}
+            </p>
+          )}
         </CardContent>
       </Card>
 

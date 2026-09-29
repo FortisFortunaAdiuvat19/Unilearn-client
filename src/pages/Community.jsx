@@ -1,7 +1,8 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { GraduationCap, ArrowRight } from "lucide-react";
 import StudyGroups from "@/components/community/StudyGroups";
 import ChatRooms from "@/components/community/ChatRooms";
-import TutorSearch from "@/components/community/TutorSearch";
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Community() {
@@ -23,8 +24,22 @@ export default function Community() {
           </p>
         </div>
 
-        {/* Find a Tutor */}
-        <TutorSearch />
+        {/* Find a Tutor — now its own page; this is a pointer to it */}
+        <Link
+          to="/find-tutor"
+          className="mb-16 flex items-center justify-between gap-4 border border-border/40 rounded-sm p-6 hover:border-primary/40 transition-colors group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-display text-xl font-bold">Find a Tutor</h2>
+              <p className="text-sm text-muted-foreground">Search by course and compare tutors by rating and availability.</p>
+            </div>
+          </div>
+          <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
+        </Link>
 
         {/* Study Groups */}
         <StudyGroups />
