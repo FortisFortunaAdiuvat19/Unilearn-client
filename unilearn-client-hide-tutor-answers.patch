@@ -1,0 +1,146 @@
+diff --git a/src/pages/AssessmentPlayer.jsx b/src/pages/AssessmentPlayer.jsx
+index 4e00d3d..4653804 100644
+--- a/src/pages/AssessmentPlayer.jsx
++++ b/src/pages/AssessmentPlayer.jsx
+@@ -38,11 +38,13 @@ export default function AssessmentPlayer() {
+   const [theoryAnswers, setTheoryAnswers] = useState({});
+   const [objectiveAnswers, setObjectiveAnswers] = useState({});
+   const [submitted, setSubmitted] = useState(false);
+-  // Set from the submit response, not recomputed client-side, so the
+-  // verdict always matches the pass/fail call the server actually made
+-  // (and the TutorProfile update it may have triggered). null = this
+-  // wasn't a tutor_qualification submission at all.
+-  const [tutorQualified, setTutorQualified] = useState(null);
++  // The server's own grading of the attempt just submitted — objective
++  // score/max/percent and, for a tutor_qualification submission, the
++  // pass/fail call and any TutorProfile update it triggered. Never
++  // recomputed client-side: for tutor_qualification specifically,
++  // correct_option isn't even sent to the client (see the server's
++  // GET /:id route), so there'd be nothing to recompute a score from.
++  const [submitResult, setSubmitResult] = useState(null);
+ 
+   const submitMutation = useMutation({
+     mutationFn: async () => {
+@@ -59,7 +61,7 @@ export default function AssessmentPlayer() {
+       return res.data;
+     },
+     onSuccess: (data) => {
+-      setTutorQualified(data?.tutor_qualified ?? null);
++      setSubmitResult(data);
+       setSubmitted(true);
+     },
+   });
+@@ -125,11 +127,10 @@ export default function AssessmentPlayer() {
+   const currentSection = sections[step];
+   const isLastSection = step === sections.length - 1;
+ 
+-  const objectiveScore = objectiveQuestions.reduce((acc, q, i) => {
+-    return acc + (objectiveAnswers[i] === q.correct_option ? 1 : 0);
+-  }, 0);
+   const objectiveMax = objectiveQuestions.length;
+-  const objectivePct = objectiveMax > 0 ? Math.round((objectiveScore / objectiveMax) * 100) : 0;
++  // Derived, not stored separately, so every existing use of tutorQualified
++  // below keeps working unchanged.
++  const tutorQualified = submitResult?.tutor_qualified ?? null;
+ 
+   const stepNames = sections.map((s) => (s === "objective" ? "Objective Section" : "Theory Section"));
+   const currentStepName = submitted ? "Results" : stepNames[step];
+@@ -139,11 +140,11 @@ export default function AssessmentPlayer() {
+     setStep(0);
+     setTheoryAnswers({});
+     setObjectiveAnswers({});
+-    setTutorQualified(null);
++    setSubmitResult(null);
+     submitMutation.reset();
+   };
+ 
+-  const needsImprovement = hasObjective && objectivePct < IMPROVEMENT_THRESHOLD;
++  const needsImprovement = hasObjective && !!submitResult && submitResult.objective_percent < IMPROVEMENT_THRESHOLD;
+ 
+   return (
+     <div className="pt-28 pb-20">
+@@ -364,11 +365,11 @@ export default function AssessmentPlayer() {
+               {hasObjective ? (
+                 <>
+                   <div className="flex items-center justify-center gap-2 mb-2">
+-                    <span className="font-display text-4xl font-bold text-primary">{objectiveScore}</span>
+-                    <span className="font-display text-2xl text-muted-foreground">/ {objectiveMax}</span>
++                    <span className="font-display text-4xl font-bold text-primary">{submitResult?.objective_score}</span>
++                    <span className="font-display text-2xl text-muted-foreground">/ {submitResult?.objective_max ?? objectiveMax}</span>
+                   </div>
+                   <p className="text-sm text-muted-foreground">
+-                    Objective score: {objectivePct}% correct
++                    Objective score: {submitResult?.objective_percent}% correct
+                   </p>
+                 </>
+               ) : (
+@@ -376,6 +377,11 @@ export default function AssessmentPlayer() {
+                   Submitted. Review your answers below.
+                 </p>
+               )}
++              {isTutorQualification && (
++                <p className="text-xs text-muted-foreground mt-3">
++                  Individual questions aren't reviewed here, since this assessment is reused for every candidate on the course.
++                </p>
++              )}
+             </div>
+ 
+             {/* Tutor qualification verdict — only shown for a tutor_qualification
+@@ -406,7 +412,7 @@ export default function AssessmentPlayer() {
+                       Not quite — 70% needed to qualify
+                     </p>
+                     <p className="text-sm text-amber-700/80">
+-                      Review the objective answers below and retake the assessment whenever you're ready.
++                      Retake the assessment whenever you're ready.
+                     </p>
+                   </>
+                 )}
+@@ -454,8 +460,11 @@ export default function AssessmentPlayer() {
+               </div>
+             )}
+ 
+-            {/* Objective results */}
+-            {hasObjective && objectiveQuestions.map((q, i) => {
++            {/* Objective results — the answer-by-answer breakdown reveals
++                which option was correct, which is fine for a self-practice
++                test/exam but not for the tutor-qualification assessment,
++                whose questions are reused for every future candidate. */}
++            {hasObjective && !isTutorQualification && objectiveQuestions.map((q, i) => {
+               const isCorrect = objectiveAnswers[i] === q.correct_option;
+               const selected = objectiveAnswers[i];
+               return (
+@@ -490,8 +499,13 @@ export default function AssessmentPlayer() {
+               );
+             })}
+ 
+-            {/* Theory results */}
+-            {hasTheory && (
++            {/* Theory results — ordinary tests/exams get the full per-question
++                review with sample answers; the tutor-qualification
++                assessment only confirms the section was submitted, since a
++                sample answer is exactly the kind of "correct answer" a
++                reused, every-candidate-gets-the-same-questions assessment
++                can't afford to reveal. */}
++            {hasTheory && !isTutorQualification && (
+               <div className="mt-8">
+                 <h3 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
+                   <AlertCircle className="w-4 h-4 text-primary" />
+@@ -526,6 +540,18 @@ export default function AssessmentPlayer() {
+               </div>
+             )}
+ 
++            {hasTheory && isTutorQualification && (
++              <div className="mt-8 border border-border/40 rounded-sm p-5 flex items-center justify-between gap-4">
++                <div>
++                  <h3 className="font-display text-sm font-bold mb-1">Theory Section</h3>
++                  <p className="text-xs text-muted-foreground">
++                    {theoryQuestions.length} answer{theoryQuestions.length === 1 ? "" : "s"} submitted. Not auto-graded, and not shown here.
++                  </p>
++                </div>
++                <ClipboardCheck className="w-5 h-5 text-muted-foreground flex-shrink-0" />
++              </div>
++            )}
++
+             {/* Actions */}
+             <div className="flex gap-3 justify-center mt-8">
+               <button
